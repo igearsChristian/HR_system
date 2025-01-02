@@ -1,49 +1,15 @@
 <?php
 //to use the server: enter  php -S localhost:8000 server.php    in the terminal
 
-// Get the requested URI
 $requestUri = $_SERVER['REQUEST_URI'];
 
-// Serve the index.html file
-if ($requestUri === '/' || $requestUri === '/index.html') {
-    if (file_exists('index.html')) {
-        header('Content-Type: text/html');
-        readfile('index.html');
-    } else {
-        http_response_code(404);
-        echo '404 Not Found';
-    }
-}
+$basePath = __DIR__ . '/';
 
-//phrase 1: try upload a single image requested by test.html in test_server.php 
-// if ($requestUri === '/assets/img/logo.png') {
-//     $imageFile = __DIR__ . '/assets/img/logo.png'; // Full path to logo.png
-//     if (file_exists($imageFile)) {
-//         header('Content-Type: image/png');
-//         readfile($imageFile);
-//     } else {
-//         http_response_code(404);
-//         echo '404 Not Found';
-//     }
-// }
+$requestedFile = $basePath . ltrim($requestUri, '/'); 
 
-//phrase 2: try upload all the images requested by test.html in test_server.php 
-// if (preg_match('/^\/assets\/img\/(.+\.(jpg|jpeg|png|gif|svg))$/', $requestUri, $matches)) {
-//     $imageFile = __DIR__ . $matches[0]; // Full path to the requested image file
-//     if (file_exists($imageFile)) {
-//         $extension = pathinfo($imageFile, PATHINFO_EXTENSION);
-//         $mimeType = 'image/' . ($extension === 'jpg' ? 'jpeg' : $extension);
-//         header('Content-Type: ' . $mimeType);
-//         readfile($imageFile);
-//     } else {
-//         http_response_code(404);
-//         echo '404 Not Found';
-//     }
-// }
-
-//phrase 3: try to upload a single svg image requested by test.html in test_server.php 
-if (preg_match('/^\/assets\/img\/(.+\.(jpg|jpeg|png|gif|svg))$/', $requestUri, $matches)) {
-    $imageFile = __DIR__ . '/' . $matches[0]; // Full path to the requested image file
+// Handle image requests first
+if (preg_match('/^\/assets\/img\/(.+\.(jpg|jpeg|png|gif|svg))$/i', $requestUri, $matches)) {
+    $imageFile = $basePath . $matches[0]; // Full path to the requested image file
     if (file_exists($imageFile)) {
         $extension = pathinfo($imageFile, PATHINFO_EXTENSION);
         
@@ -68,18 +34,17 @@ if (preg_match('/^\/assets\/img\/(.+\.(jpg|jpeg|png|gif|svg))$/', $requestUri, $
         }
         
         header('Content-Type: ' . $mimeType);
-        header('Content-Length: ' . filesize($imageFile)); // Optional: Specify content length
+        header('Content-Length: ' . filesize($imageFile)); // Specify content length
         readfile($imageFile);
         exit; // Stop further script execution
     } else {
         http_response_code(404);
         echo '404 Not Found';
+        exit; // Stop further script execution
     }
 }
 
-
-// Serve CSS files
-elseif (preg_match('/\.css$/', $requestUri)) {
+if (preg_match('/\.css$/', $requestUri)) {
     $cssFile = __DIR__ . $requestUri; // Full path to the CSS file
     if (file_exists($cssFile)) {
         header('Content-Type: text/css');
@@ -88,13 +53,16 @@ elseif (preg_match('/\.css$/', $requestUri)) {
         http_response_code(404);
         echo '404 Not Found';
     }
-} else {
-    http_response_code(404);
-    echo '404 Not Found';
 }
 
+// Serve the index.html file
+if ($requestUri === '/') {
+    header('Content-Type: text/html');
+    readfile('login.html');
+}
 
-
-
-
-?>
+else if (file_exists($requestedFile) && is_file($requestedFile)) {
+    header('Content-Type: text/html');
+    readfile($requestedFile);
+} else { 
+    echo "http not found.";}
